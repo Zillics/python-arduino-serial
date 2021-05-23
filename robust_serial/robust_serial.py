@@ -1,18 +1,14 @@
 from __future__ import print_function, division, unicode_literals, absolute_import
-
 import struct
-
 from enum import Enum
-
 
 class Order(Enum):
     """
     Pre-defined orders
     """
-
     HELLO = 0
-    SERVO = 1
-    MOTOR = 2
+    CW_CMD = 1
+    WW_CMD = 2
     ALREADY_CONNECTED = 3
     ERROR = 4
     RECEIVED = 5
@@ -59,6 +55,16 @@ def write_i8(f, value):
     else:
         print("Value error:{}".format(value))
 
+def write_ui8(f, value):
+    """
+    :param f: file handler or serial file
+    :param value: (uint8_t)
+    """
+    if 0 <= value <= 255:
+        f.write(struct.pack('<B', value))
+    else:
+        print("Value error:{}".format(value))
+
 
 def write_order(f, order):
     """
@@ -83,40 +89,3 @@ def write_i32(f, value):
     """
     f.write(struct.pack('<l', value))
 
-
-def decode_order(f, byte, debug=False):
-    """
-    :param f: file handler or serial file
-    :param byte: (int8_t)
-    :param debug: (bool) whether to print or not received messages
-    """
-    try:
-        order = Order(byte)
-        if order == Order.HELLO:
-            msg = "HELLO"
-        elif order == Order.SERVO:
-            angle = read_i16(f)
-            # Bit representation
-            # print('{0:016b}'.format(angle))
-            msg = "SERVO {}".format(angle)
-        elif order == Order.MOTOR:
-            speed = read_i8(f)
-            msg = "motor {}".format(speed)
-        elif order == Order.ALREADY_CONNECTED:
-            msg = "ALREADY_CONNECTED"
-        elif order == Order.ERROR:
-            error_code = read_i16(f)
-            msg = "Error {}".format(error_code)
-        elif order == Order.RECEIVED:
-            msg = "RECEIVED"
-        elif order == Order.STOP:
-            msg = "STOP"
-        else:
-            msg = ""
-            print("Unknown Order", byte)
-
-        if debug:
-            print(msg)
-    except Exception as e:
-        print("Error decoding order {}: {}".format(byte, e))
-        print('byte={0:08b}'.format(byte))
